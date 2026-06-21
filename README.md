@@ -1,4 +1,4 @@
-# Network Traffic Analyser
+# Network Traffic Analyzer
 
 [![tests](https://github.com/OWNER/network-traffic-analyser/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/network-traffic-analyser/actions/workflows/ci.yml)
 
