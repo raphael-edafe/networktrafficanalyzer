@@ -1,0 +1,10 @@
+# Threat-intel blocklist — one IP or CIDR per line. Lines starting with # are ignored.
+# In production, point config.threat_blocklist_url at a live feed
+# (e.g. FireHOL level1, Spamhaus DROP, AbuseIPDB export) to refresh this automatically.
+#
+# The sample entries below correspond to the demo traffic in tools/make_test_pcap.py
+# so the THREAT_INTEL detector visibly fires when you replay demo.pcap.
+185.220.101.5
+45.155.205.233
+# Example CIDR block:
+192.0.2.0/24

@@ -1,0 +1,33 @@
+{
+  "my_ip": "192.168.0.103",
+  "window_seconds": 10,
+  "log_file": "alerts.log",
+  "db_file": "netanalyser.db",
+  "ignored_ips": ["192.168.0.1"],
+  "suspicious_ports": [21, 23, 445, 3389, 5900],
+  "trusted_org_keywords": ["microsoft", "google", "amazon", "cloudflare", "akamai", "apple"],
+
+  "anomaly_z_threshold": 3.5,
+  "anomaly_min_samples": 4,
+  "anomaly_min_packets": 50,
+  "volume_threshold_multiplier": 3,
+
+  "port_scan_threshold": 5,
+
+  "beacon_min_hits": 6,
+  "beacon_min_interval": 5.0,
+  "beacon_max_interval": 3600.0,
+  "beacon_max_cv": 0.08,
+  "beacon_history": 32,
+
+  "exfil_bytes_threshold": 500000,
+
+  "enable_geo": true,
+  "ipinfo_token": "",
+  "threat_blocklist_file": "threat_blocklist.txt",
+  "threat_blocklist_url": "",
+
+  "alert_cooldown_seconds": 120,
+  "notify_webhook_url": "",
+  "notify_min_severity": "CRITICAL"
+}

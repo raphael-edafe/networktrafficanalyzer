@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+alerts.log
+dashboard_state.json
+.venv/
+venv/
