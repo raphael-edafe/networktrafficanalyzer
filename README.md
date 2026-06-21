@@ -161,5 +161,3 @@ This is a learning / home-network tool, not a hardened production IDS. Specifica
 - **SQLite + per-window processing** is fine for a host; it isn't built for
   high-throughput backbone traffic.
 
----
-
