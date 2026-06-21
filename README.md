@@ -1,8 +1,6 @@
 # Network Traffic Analyzer
 
-[![tests](https://github.com/OWNER/network-traffic-analyser/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/network-traffic-analyser/actions/workflows/ci.yml)
-
-> Replace `OWNER` in the badge URL above with your GitHub username/org once pushed.
+[![tests](https://github.com/raphael-edafe/networktrafficanalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/raphael-edafe/networktrafficanalyzer/actions/workflows/ci.yml)
 
 A lightweight, host-based **intrusion-detection system** in Python. It captures
 live network traffic (or replays a saved `.pcap`), aggregates it into time
