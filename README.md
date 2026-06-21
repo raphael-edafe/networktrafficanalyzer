@@ -165,9 +165,3 @@ This is a learning / home-network tool, not a hardened production IDS. Specifica
 
 ---
 
-## Roadmap ideas
-
-- DNS-tunnelling / suspicious-domain detection
-- Leaflet world map of geo-located peers (lat/long already stored)
-- IsolationForest multi-feature anomaly model as an optional detector
-- PDF/email daily summary report
