@@ -5,9 +5,11 @@ import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import importlib
+sys.modules['net_analyzer'] = importlib.import_module('net-analyzer')
 
-from netanalyser.models import FlowRecord
-from netanalyser.storage import Storage
+from net_analyzer.models import FlowRecord
+from net_analyzer.storage import Storage
 
 
 class TestStorage(unittest.TestCase):

@@ -77,8 +77,8 @@ def run_replay(cfg, analyzer, path):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="netanalyser",
-                                description="Network traffic analyser / lightweight IDS")
+    p = argparse.ArgumentParser(prog="net-analyzer",
+                                description="Network traffic analyzer / lightweight IDS")
     p.add_argument("-c", "--config", default="config.json", help="path to config.json")
     p.add_argument("--pcap", help="analyse a saved .pcap file instead of live capture")
     p.add_argument("--iface", help="network interface for live capture")

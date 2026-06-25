@@ -4,9 +4,11 @@ import unittest
 from types import SimpleNamespace
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import importlib
+sys.modules['net_analyzer'] = importlib.import_module('net-analyzer')
 
-from netanalyser import detectors
-from netanalyser.models import FlowRecord
+from net_analyzer import detectors
+from net_analyzer.models import FlowRecord
 
 BEACON_CFG = SimpleNamespace(beacon_min_hits=6, beacon_min_interval=5.0,
                              beacon_max_interval=3600.0, beacon_max_cv=0.08)

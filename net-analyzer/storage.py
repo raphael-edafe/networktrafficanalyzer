@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_beacon_peer ON beacon_contacts(peer);
 
 
 class Storage:
-    def __init__(self, path: str = "netanalyser.db"):
+    def __init__(self, path: str = "net-analyzer.db"):
         # check_same_thread=False so the Flask dashboard can share a connection if needed.
         self.conn = sqlite3.connect(path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row

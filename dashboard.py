@@ -3,14 +3,18 @@ polls /api/state every few seconds, and renders charts with Chart.js.
 
     python dashboard.py            # then open http://127.0.0.1:5000
 """
+import importlib
 import os
+import sys
 
 from flask import Flask, jsonify, render_template_string
 
-from netanalyser.config import Config
-from netanalyser.storage import Storage
+# 'net-analyzer' has a hyphen, so normal import syntax won't work — use importlib.
+sys.modules['net_analyzer'] = importlib.import_module('net-analyzer')
+from net_analyzer.config import Config
+from net_analyzer.storage import Storage
 
-CONFIG_PATH = os.environ.get("NETANALYSER_CONFIG", "config.json")
+CONFIG_PATH = os.environ.get("NET_ANALYZER_CONFIG", "config.json")
 cfg = Config.load(CONFIG_PATH)
 app = Flask(__name__)
 
@@ -180,5 +184,5 @@ window.onload = () => {
 if __name__ == "__main__":
     # Debug mode exposes Werkzeug's interactive debugger (an RCE vector), so it's OFF
     # by default. Opt in for local development with NETANALYSER_DEBUG=1.
-    debug = os.environ.get("NETANALYSER_DEBUG", "").lower() in ("1", "true", "yes")
+    debug = os.environ.get("NET_ANALYZER_DEBUG", "").lower() in ("1", "true", "yes")
     app.run(host="127.0.0.1", port=5000, debug=debug)

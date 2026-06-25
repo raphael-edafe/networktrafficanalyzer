@@ -9,7 +9,7 @@ DEFAULTS = {
     "my_ip": None,
     "window_seconds": 10,
     "log_file": "alerts.log",
-    "db_file": "netanalyser.db",
+    "db_file": "net-analyzer.db",
     "ignored_ips": [],
     "suspicious_ports": [21, 23, 445, 3389, 5900],
     "trusted_org_keywords": ["microsoft", "google", "amazon", "cloudflare", "akamai", "apple"],

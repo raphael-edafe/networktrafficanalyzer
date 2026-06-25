@@ -1,7 +1,7 @@
 """Generate a synthetic demo.pcap that exercises every detector.
 
 Run:  python tools/make_test_pcap.py
-Then: python -m netanalyser --pcap demo.pcap --no-geo
+Then: python -c "import importlib,sys; sys.modules['net_analyzer']=importlib.import_module('net-analyzer'); from net_analyzer.cli import main; main(['--pcap','demo.pcap','--no-geo'])"
 
 The crafted traffic (against my_ip 192.168.0.103) contains:
   * benign baseline traffic from 8.8.8.8 / 93.184.216.34

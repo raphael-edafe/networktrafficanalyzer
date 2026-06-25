@@ -7,13 +7,15 @@ import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import importlib
+sys.modules['net_analyzer'] = importlib.import_module('net-analyzer')
 
 from scapy.all import IP, TCP, Raw
 
-from netanalyser.analyzer import Analyzer
-from netanalyser.config import Config
-from netanalyser.enrich import Enricher, ThreatIntel
-from netanalyser.storage import Storage
+from net_analyzer.analyzer import Analyzer
+from net_analyzer.config import Config
+from net_analyzer.enrich import Enricher, ThreatIntel
+from net_analyzer.storage import Storage
 
 MY = "10.0.0.5"
 
