@@ -82,10 +82,11 @@ PAGE = """<!doctype html>
   --text:   #c3d1cf;
   --bright: #eaf2ef;
 
-  /* accent matches the sibling project; amber and red are reserved for
-     severity, so a colour on this page always means something */
-  --accent: #5f9ec9;
-  --wire:   #7fb4d6;
+  /* teal is this project's own accent - deliberately not the sibling project's
+     blue, so the two read as related rather than identical. amber and red stay
+     reserved for severity, so a colour here always means something. */
+  --accent: #4bb5a0;
+  --wire:   #6fcbb8;
   --info:   #8b9b9c;
   --warn:   #cc9166;
   --crit:   #c2635e;
@@ -107,15 +108,16 @@ body {
 }
 .wrap { max-width: 1400px; margin: 0 auto; }
 
-/* ---- wire: packets travelling, same mechanic as the sibling project's fish.
-   CSS rather than JS because a negative animation-delay starts each packet
-   part-way along, so the wire is populated the moment the page loads. ---- */
+/* ---- wire: tcp flags travelling it. >--o read too much like a fish, which
+   made this look like the sibling project rather than its own thing; protocol
+   flags are unambiguous. CSS rather than JS because a negative animation-delay
+   starts each one part-way along, so the wire is populated on load. ---- */
 .line { position: relative; height: 16px; overflow: hidden; font-size: 12px; line-height: 16px; }
 .pkt { position: absolute; top: 0; white-space: pre; color: var(--wire);
        animation: travel linear infinite; }
 .pkt.back { animation-name: travel-back; }
-@keyframes travel      { from { left: -5ch; } to { left: 100%; } }
-@keyframes travel-back { from { left: 100%; } to { left: -5ch; } }
+@keyframes travel      { from { left: -6ch; } to { left: 100%; } }
+@keyframes travel-back { from { left: 100%; } to { left: -6ch; } }
 .p1 { animation-duration: 19s; animation-delay:  -3s; }
 .p2 { animation-duration: 27s; animation-delay: -14s; opacity: .7; }
 .p3 { animation-duration: 23s; animation-delay: -19s; opacity: .85; }
@@ -198,16 +200,16 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 <div class="wrap">
 
   <div class="line" aria-hidden="true">
-    <span class="pkt p1">&gt;--o</span>
-    <span class="pkt p2 back">o--&lt;</span>
-    <span class="pkt p3">&gt;--o</span>
-    <span class="pkt p4 back">o--&lt;</span>
-    <span class="pkt p5">&gt;--o</span>
+    <span class="pkt p1">[SYN]</span>
+    <span class="pkt p2 back">[ACK]</span>
+    <span class="pkt p3">[PSH]</span>
+    <span class="pkt p4 back">[FIN]</span>
+    <span class="pkt p5">[RST]</span>
   </div>
   <pre class="rail" id="rail"></pre>
 
   <div class="title">NET-ANALYZER</div>
-  <p class="sub">live capture <span class="live">&gt;--o</span>
+  <p class="sub">live capture <span class="live">[SYN]</span>
      last window <span id="updated">...</span> · refreshing every 3s</p>
 
   <div class="box">
