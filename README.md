@@ -32,7 +32,7 @@ and statistically anomalous volume spikes — surfaced live on a web dashboard.
 - **Live web dashboard** — Chart.js traffic graphs, top talkers, severity
   breakdown, and a colour-coded alert feed, polling a JSON API.
 - **Webhook notifications** (Discord/Slack-style) for high-severity alerts.
-- **Tested** — 19 unit + integration tests, no admin rights needed.
+- **Tested** — 23 unit + integration tests, no admin rights needed.
 
 ---
 

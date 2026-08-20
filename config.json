@@ -2,7 +2,7 @@
   "my_ip": "192.168.0.103",
   "window_seconds": 10,
   "log_file": "alerts.log",
-  "db_file": "netanalyser.db",
+  "db_file": "net-analyzer.db",
   "ignored_ips": ["192.168.0.1"],
   "suspicious_ports": [21, 23, 445, 3389, 5900],
   "trusted_org_keywords": ["microsoft", "google", "amazon", "cloudflare", "akamai", "apple"],
