@@ -275,8 +275,14 @@ const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.classN
 // the rails are drawn to the container width rather than a fixed length, so
 // packets never travel past the end of the wire
 function drawRails() {
+  // font-family and font-size explicitly, NOT the `font` shorthand:
+  // getComputedStyle(el).font returns an empty string in Chrome, so the probe
+  // silently fell back to a proportional face and measured ~18% too wide,
+  // which drew a rail short of the container.
+  const cs = getComputedStyle($('#rail'));
   const probe = el('span'); probe.style.cssText =
-    'position:absolute;visibility:hidden;white-space:pre;font:' + getComputedStyle($('#rail')).font;
+    'position:absolute;visibility:hidden;white-space:pre;font-family:'
+    + cs.fontFamily + ';font-size:' + cs.fontSize;
   probe.textContent = '-'.repeat(100); document.body.append(probe);
   const chw = probe.getBoundingClientRect().width / 100; probe.remove();
   const n = Math.ceil($('.wrap').clientWidth / (chw || 7)) + 2;
@@ -370,6 +376,10 @@ async function refresh() {
 }
 
 drawRails();
+// and again once the webfont lands: measuring character width before
+// JetBrains Mono loads uses the fallback's metrics, which draws a rail too
+// short for the container and lets packets travel past the end of the wire
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawRails);
 addEventListener('resize', drawRails);
 refresh();
 setInterval(refresh, 3000);
