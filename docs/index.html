@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>net-analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #07090a;
+  --panel:  #0d1011;
+  --raised: #131718;
+  --rule:   #1e2426;
+  --rule-2: #2c3436;
+  --dim:    #5c6b6d;
+  --mid:    #8b9b9c;
+  --text:   #c3d1cf;
+  --bright: #eaf2ef;
+
+  /* teal is this project's own accent - deliberately not the sibling project's
+     blue, so the two read as related rather than identical. amber and red stay
+     reserved for severity, so a colour here always means something. */
+  --accent: #4bb5a0;
+  --wire:   #6fcbb8;
+  --info:   #8b9b9c;
+  --warn:   #cc9166;
+  --crit:   #c2635e;
+
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* JetBrains Mono draws -> => != as single glyphs. Hostnames, paths and alert
+   text contain those sequences and are shown verbatim, so the font must not
+   redraw them. */
+* { box-sizing: border-box; font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "calt" 0; }
+
+body {
+  margin: 0; padding: 26px 20px 80px;
+  background: var(--bg); color: var(--text);
+  font: 400 13px/1.6 var(--mono);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1400px; margin: 0 auto; }
+
+/* ---- wire: tcp flags travelling it. >--o read too much like a fish, which
+   made this look like the sibling project rather than its own thing; protocol
+   flags are unambiguous. CSS rather than JS because a negative animation-delay
+   starts each one part-way along, so the wire is populated on load. ---- */
+.line { position: relative; height: 16px; overflow: hidden; font-size: 12px; line-height: 16px; }
+.pkt { position: absolute; top: 0; white-space: pre; color: var(--wire);
+       animation: travel linear infinite; }
+.pkt.back { animation-name: travel-back; }
+@keyframes travel      { from { left: -6ch; } to { left: 100%; } }
+@keyframes travel-back { from { left: 100%; } to { left: -6ch; } }
+.p1 { animation-duration: 19s; animation-delay:  -3s; }
+.p2 { animation-duration: 27s; animation-delay: -14s; opacity: .7; }
+.p3 { animation-duration: 23s; animation-delay: -19s; opacity: .85; }
+.p4 { animation-duration: 33s; animation-delay:  -8s; opacity: .6; }
+.p5 { animation-duration: 16s; animation-delay: -11s; }
+@media (prefers-reduced-motion: reduce) {
+  .pkt { animation: none; }
+  .p1 { left: 5%; } .p2 { left: 27%; } .p3 { left: 48%; }
+  .p4 { left: 69%; } .p5 { left: 88%; }
+}
+.rail { color: var(--dim); white-space: pre; overflow: hidden; margin: 0; font-size: 12px; }
+
+.title { color: var(--bright); font-weight: 700; font-size: 19px;
+         letter-spacing: .16em; margin: 12px 0 5px; }
+.sub { color: var(--mid); margin: 0 0 22px; }
+.sub .live { color: var(--accent); }
+
+/* ---- boxes ---- */
+.box { border: 1px solid var(--rule); background: var(--panel); margin-bottom: 16px; }
+.box > .bar { border-bottom: 1px solid var(--rule); padding: 7px 12px;
+              color: var(--mid); display: flex; align-items: center; gap: 10px; }
+.box > .bar .k { color: var(--accent); }
+.box > .bar .sp { flex: 1; }
+.box > .bar .meta { color: var(--dim); font-size: 12px; }
+.box > .in { padding: 12px; overflow-x: auto; }
+
+.grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 1080px) { .grid { grid-template-columns: 1fr 1fr; }
+                             .grid .full { grid-column: 1 / -1; } }
+
+/* ---- status counters ---- */
+.counts { display: flex; flex-wrap: wrap; gap: 26px; }
+.count .n { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.count .l { color: var(--dim); font-size: 12px; letter-spacing: .06em; }
+.count.ok   .n { color: var(--accent); }
+.count.warn .n { color: var(--warn); }
+.count.crit .n { color: var(--crit); }
+
+/* ---- ascii charts ---- */
+.spark { white-space: pre; color: var(--accent); font-size: 26px; line-height: 1.05;
+         margin: 0; overflow-x: auto; }
+.axis { display: flex; color: var(--dim); font-size: 11.5px; margin-top: 6px; }
+.axis .sp { flex: 1; }
+
+.bars { margin: 0; }
+.bar-row { display: flex; align-items: baseline; gap: 10px; padding: 3px 0;
+           border-bottom: 1px dotted var(--rule); }
+.bar-row:last-child { border-bottom: 0; }
+.bar-row .lbl { flex: none; width: 15ch; color: var(--text);
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-row .g { white-space: pre; color: var(--accent); }
+.bar-row .g .rest { color: var(--rule-2); }
+.bar-row .v { margin-left: auto; color: var(--mid); flex: none; }
+.bar-row.CRITICAL .g { color: var(--crit); }
+.bar-row.WARNING  .g { color: var(--warn); }
+.bar-row.INFO     .g { color: var(--info); }
+
+/* ---- tables ---- */
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 4px 10px 4px 0; border-bottom: 1px dotted var(--rule); }
+th { color: var(--dim); font-weight: 500; }
+td { color: var(--text); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---- alerts ---- */
+.alerts { margin: 0; }
+.al { display: flex; gap: 10px; padding: 4px 0; border-bottom: 1px dotted var(--rule); }
+.al:last-child { border-bottom: 0; }
+.al .sev { flex: none; width: 3ch; font-weight: 700; }
+.al .cat { flex: none; width: 17ch; color: var(--dim); }
+.al .ts  { flex: none; color: var(--dim); }
+.al .msg { color: var(--text); }
+.al.CRITICAL .sev { color: var(--crit); }
+.al.WARNING  .sev { color: var(--warn); }
+.al.INFO     .sev { color: var(--info); }
+.empty { color: var(--dim); margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="line" aria-hidden="true">
+    <span class="pkt p1">[SYN]</span>
+    <span class="pkt p2 back">[ACK]</span>
+    <span class="pkt p3">[PSH]</span>
+    <span class="pkt p4 back">[FIN]</span>
+    <span class="pkt p5">[RST]</span>
+  </div>
+  <pre class="rail" id="rail"></pre>
+
+  <div class="title">NET-ANALYZER</div>
+  <p class="sub">recorded snapshot <span class="live">[SYN]</span>
+     captured <span id="updated">...</span> · static page, nothing is capturing</p>
+
+  <div class="box">
+    <div class="bar"><span class="k">$</span> status <span class="sp"></span>
+      <span class="meta" id="totals"></span></div>
+    <div class="in">
+      <div class="counts">
+        <div class="count ok"><div class="n" id="c-active">-</div><div class="l">active peers</div></div>
+        <div class="count"><div class="n" id="c-known">-</div><div class="l">known ips</div></div>
+        <div class="count warn"><div class="n" id="c-warn">-</div><div class="l">warnings</div></div>
+        <div class="count crit"><div class="n" id="c-crit">-</div><div class="l">critical</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box full">
+      <div class="bar"><span class="k">&gt;</span> traffic over time <span class="sp"></span>
+        <span class="meta">packets per window</span></div>
+      <div class="in">
+        <pre class="spark" id="spark"></pre>
+        <div class="axis"><span id="ax-from"></span><span class="sp"></span>
+          <span id="ax-peak"></span><span class="sp"></span><span id="ax-to"></span></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="bar"><span class="k">&gt;</span> top talkers <span class="sp"></span>
+        <span class="meta">bytes</span></div>
+      <div class="in"><div class="bars" id="talkers"></div></div>
+    </div>
+
+    <div class="box">
+      <div class="bar"><span class="k">&gt;</span> alerts by severity</div>
+      <div class="in"><div class="bars" id="sev"></div></div>
+    </div>
+
+    <div class="box">
+      <div class="bar"><span class="k">&gt;</span> current window <span class="sp"></span>
+        <span class="meta">active peers</span></div>
+      <div class="in">
+        <table><thead><tr><th>ip</th><th class="num">pkts</th>
+          <th class="num">in</th><th class="num">out</th></tr></thead>
+          <tbody id="cur"></tbody></table>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="bar"><span class="k">&gt;</span> recent alerts</div>
+      <div class="in"><div class="alerts" id="alerts"></div></div>
+    </div>
+  </div>
+
+<pre class="rail" id="rail2"></pre>
+</div>
+
+<script>
+const SNAPSHOT = {"summary": {"total_alerts": 44, "critical": 4, "warning": 16, "known_ips": 45, "active_ips": 13, "last_updated": "2026-08-08 22:11:54"}, "current": [{"window_id": 53, "ip": "192.168.0.180", "packet_count": 27, "byte_count": 5997, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "128.116.127.3", "packet_count": 6, "byte_count": 1647, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "192.168.0.170", "packet_count": 10, "byte_count": 1270, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "16.59.181.179", "packet_count": 4, "byte_count": 484, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "40.79.141.154", "packet_count": 5, "byte_count": 414, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "128.116.48.3", "packet_count": 3, "byte_count": 260, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "3.12.228.222", "packet_count": 3, "byte_count": 218, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "192.168.0.178", "packet_count": 2, "byte_count": 200, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "140.82.114.26", "packet_count": 2, "byte_count": 148, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "150.171.109.181", "packet_count": 2, "byte_count": 132, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "13.66.142.101", "packet_count": 1, "byte_count": 85, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "192.168.0.159", "packet_count": 1, "byte_count": 82, "bytes_in": 0, "bytes_out": 0}, {"window_id": 53, "ip": "34.202.253.140", "packet_count": 1, "byte_count": 66, "bytes_in": 0, "bytes_out": 0}], "alerts": [{"id": 44, "ts": "2026-08-08 22:11:54", "epoch": 1786241514.6393745, "severity": "INFO", "category": "NEW_IP", "ip": "150.171.109.181", "message": "NEW IP: 150.171.109.181 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 43, "ts": "2026-08-08 22:11:23", "epoch": 1786241483.9151852, "severity": "WARNING", "category": "NEW_IP", "ip": "140.82.114.21", "message": "NEW IP: 140.82.114.21 has never been seen before [US, AS36459 GitHub, Inc.]", "confidence": null}, {"id": 42, "ts": "2026-08-08 22:11:23", "epoch": 1786241483.9151852, "severity": "WARNING", "category": "VOLUME_SPIKE", "ip": "192.168.0.180", "message": "192.168.0.180 sent 218 packets (baseline ~57, modified z=10.9)", "confidence": 1.0}, {"id": 41, "ts": "2026-08-08 22:11:13", "epoch": 1786241473.3182766, "severity": "WARNING", "category": "NEW_IP", "ip": "140.82.112.6", "message": "NEW IP: 140.82.112.6 has never been seen before [US, AS36459 GitHub, Inc.]", "confidence": null}, {"id": 40, "ts": "2026-08-08 22:10:52", "epoch": 1786241452.381992, "severity": "INFO", "category": "NEW_IP", "ip": "162.159.138.232", "message": "NEW IP: 162.159.138.232 has never been seen before [US, AS13335 Cloudflare, Inc.]", "confidence": null}, {"id": 39, "ts": "2026-08-08 22:10:41", "epoch": 1786241441.3421288, "severity": "INFO", "category": "NEW_IP", "ip": "3.143.53.1", "message": "NEW IP: 3.143.53.1 has never been seen before [US, AS16509 Amazon.com, Inc.]", "confidence": null}, {"id": 38, "ts": "2026-08-08 22:10:41", "epoch": 1786241441.3421288, "severity": "INFO", "category": "NEW_IP", "ip": "20.184.175.16", "message": "NEW IP: 20.184.175.16 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 37, "ts": "2026-08-08 22:10:30", "epoch": 1786241430.273744, "severity": "INFO", "category": "NEW_IP", "ip": "52.104.68.41", "message": "NEW IP: 52.104.68.41 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 36, "ts": "2026-08-08 22:10:30", "epoch": 1786241430.273744, "severity": "INFO", "category": "NEW_IP", "ip": "51.132.193.105", "message": "NEW IP: 51.132.193.105 has never been seen before [GB, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 35, "ts": "2026-08-08 22:10:18", "epoch": 1786241418.738401, "severity": "INFO", "category": "NEW_IP", "ip": "20.42.65.85", "message": "NEW IP: 20.42.65.85 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 34, "ts": "2026-08-08 22:10:18", "epoch": 1786241418.738401, "severity": "INFO", "category": "NEW_IP", "ip": "18.216.36.190", "message": "NEW IP: 18.216.36.190 has never been seen before [US, AS16509 Amazon.com, Inc.]", "confidence": null}, {"id": 33, "ts": "2026-08-08 22:10:07", "epoch": 1786241407.3382194, "severity": "WARNING", "category": "NEW_IP", "ip": "160.79.104.10", "message": "NEW IP: 160.79.104.10 has never been seen before [US, AS399358 Anthropic, PBC]", "confidence": null}, {"id": 32, "ts": "2026-08-08 22:10:07", "epoch": 1786241407.3382194, "severity": "INFO", "category": "NEW_IP", "ip": "104.208.16.94", "message": "NEW IP: 104.208.16.94 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 31, "ts": "2026-08-08 22:10:07", "epoch": 1786241407.3382194, "severity": "INFO", "category": "NEW_IP", "ip": "162.159.136.234", "message": "NEW IP: 162.159.136.234 has never been seen before [US, AS13335 Cloudflare, Inc.]", "confidence": null}, {"id": 30, "ts": "2026-08-08 22:09:56", "epoch": 1786241396.351805, "severity": "INFO", "category": "NEW_IP", "ip": "72.145.35.108", "message": "NEW IP: 72.145.35.108 has never been seen before [IE, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 29, "ts": "2026-08-08 22:09:56", "epoch": 1786241396.351805, "severity": "WARNING", "category": "NEW_IP", "ip": "140.82.114.26", "message": "NEW IP: 140.82.114.26 has never been seen before [US, AS36459 GitHub, Inc.]", "confidence": null}, {"id": 28, "ts": "2026-08-08 22:09:44", "epoch": 1786241384.1208174, "severity": "WARNING", "category": "NEW_IP", "ip": "140.82.114.6", "message": "NEW IP: 140.82.114.6 has never been seen before [US, AS36459 GitHub, Inc.]", "confidence": null}, {"id": 27, "ts": "2026-08-08 22:09:44", "epoch": 1786241384.1208174, "severity": "INFO", "category": "NEW_IP", "ip": "16.59.181.179", "message": "NEW IP: 16.59.181.179 has never been seen before [US, AS16509 Amazon.com, Inc.]", "confidence": null}, {"id": 26, "ts": "2026-08-08 22:09:44", "epoch": 1786241384.1208174, "severity": "INFO", "category": "NEW_IP", "ip": "52.112.95.85", "message": "NEW IP: 52.112.95.85 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 25, "ts": "2026-08-08 22:09:44", "epoch": 1786241384.1208174, "severity": "INFO", "category": "NEW_IP", "ip": "40.79.141.154", "message": "NEW IP: 40.79.141.154 has never been seen before [FR, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 24, "ts": "1969-12-31 19:05:10", "epoch": 310.0, "severity": "WARNING", "category": "BEACONING", "ip": "91.92.240.10", "message": "Periodic beaconing to 91.92.240.10: every ~60s over 6 contacts (jitter CV=0.00) [(geo disabled)]", "confidence": 1.0}, {"id": 23, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "WARNING", "category": "EXFIL", "ip": "185.220.101.5", "message": "Large outbound transfer: 0.7 MB sent to 185.220.101.5 this window [(geo disabled)]", "confidence": null}, {"id": 22, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "WARNING", "category": "NEW_IP", "ip": "185.220.101.5", "message": "NEW IP: 185.220.101.5 has never been seen before [(geo disabled)]", "confidence": null}, {"id": 21, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "CRITICAL", "category": "THREAT_INTEL", "ip": "185.220.101.5", "message": "185.220.101.5 is on a known-malicious blocklist [(geo disabled)]", "confidence": null}, {"id": 20, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "CRITICAL", "category": "PORT_SCAN", "ip": "45.155.205.233", "message": "45.155.205.233 contacted 14 distinct ports on this machine [(geo disabled)]", "confidence": null}, {"id": 19, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "CRITICAL", "category": "SUSPICIOUS_PORT", "ip": "45.155.205.233", "message": "45.155.205.233 connected to sensitive port 21 on this machine [(geo disabled)]", "confidence": null}, {"id": 18, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "WARNING", "category": "NEW_IP", "ip": "45.155.205.233", "message": "NEW IP: 45.155.205.233 has never been seen before [(geo disabled)]", "confidence": null}, {"id": 17, "ts": "1969-12-31 19:01:10", "epoch": 70.0, "severity": "CRITICAL", "category": "THREAT_INTEL", "ip": "45.155.205.233", "message": "45.155.205.233 is on a known-malicious blocklist [(geo disabled)]", "confidence": null}, {"id": 16, "ts": "1969-12-31 19:01:00", "epoch": 60.0, "severity": "WARNING", "category": "VOLUME_SPIKE", "ip": "8.8.8.8", "message": "8.8.8.8 sent 120 packets (baseline ~5, modified z=77.6) [(geo disabled)]", "confidence": 1.0}, {"id": 15, "ts": "1969-12-31 19:00:10", "epoch": 10.0, "severity": "WARNING", "category": "NEW_IP", "ip": "91.92.240.10", "message": "NEW IP: 91.92.240.10 has never been seen before [(geo disabled)]", "confidence": null}, {"id": 14, "ts": "1969-12-31 19:00:10", "epoch": 10.0, "severity": "WARNING", "category": "NEW_IP", "ip": "93.184.216.34", "message": "NEW IP: 93.184.216.34 has never been seen before [(geo disabled)]", "confidence": null}, {"id": 13, "ts": "1969-12-31 19:00:10", "epoch": 10.0, "severity": "WARNING", "category": "NEW_IP", "ip": "8.8.8.8", "message": "NEW IP: 8.8.8.8 has never been seen before [(geo disabled)]", "confidence": null}, {"id": 12, "ts": "2026-07-16 13:26:17", "epoch": 1784222777.5078447, "severity": "INFO", "category": "NEW_IP", "ip": "20.184.175.23", "message": "NEW IP: 20.184.175.23 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 11, "ts": "2026-07-16 13:26:06", "epoch": 1784222766.9741762, "severity": "WARNING", "category": "NEW_IP", "ip": "140.82.114.5", "message": "NEW IP: 140.82.114.5 has never been seen before [US, AS36459 GitHub, Inc.]", "confidence": null}, {"id": 10, "ts": "2026-07-16 13:25:56", "epoch": 1784222756.4041736, "severity": "INFO", "category": "NEW_IP", "ip": "34.202.253.140", "message": "NEW IP: 34.202.253.140 has never been seen before [US, AS14618 Amazon.com, Inc.]", "confidence": null}, {"id": 9, "ts": "2026-07-16 13:25:35", "epoch": 1784222735.7931821, "severity": "INFO", "category": "NEW_IP", "ip": "20.115.177.124", "message": "NEW IP: 20.115.177.124 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 8, "ts": "2026-07-16 13:25:22", "epoch": 1784222722.988064, "severity": "INFO", "category": "NEW_IP", "ip": "34.158.255.62", "message": "NEW IP: 34.158.255.62 has never been seen before [US, AS396982 Google LLC]", "confidence": null}, {"id": 7, "ts": "2026-07-16 13:25:22", "epoch": 1784222722.988064, "severity": "INFO", "category": "NEW_IP", "ip": "172.172.255.217", "message": "NEW IP: 172.172.255.217 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}, {"id": 6, "ts": "2026-07-16 13:25:04", "epoch": 1784222704.7687716, "severity": "WARNING", "category": "NEW_IP", "ip": "128.116.48.3", "message": "NEW IP: 128.116.48.3 has never been seen before [US, AS22697 Roblox]", "confidence": null}, {"id": 5, "ts": "2026-07-16 13:25:04", "epoch": 1784222704.7687716, "severity": "INFO", "category": "NEW_IP", "ip": "13.66.142.101", "message": "NEW IP: 13.66.142.101 has never been seen before [US, AS8075 Microsoft Corporation]", "confidence": null}], "timeseries": {"labels": ["13:24:50", "13:25:04", "13:25:22", "13:25:35", "13:25:46", "13:25:56", "13:26:06", "13:26:17", "13:26:24", "19:00:10", "19:00:20", "19:00:30", "19:00:40", "19:00:50", "19:01:00", "19:01:10", "19:02:10", "19:03:10", "19:04:10", "19:05:10", "22:09:44", "22:09:56", "22:10:07", "22:10:18", "22:10:30", "22:10:41", "22:10:52", "22:11:03", "22:11:13", "22:11:23", "22:11:34", "22:11:44", "22:11:54"], "packets": [124, 390, 291, 195, 207, 122, 160, 123, 104, 7, 7, 6, 8, 7, 120, 76, 2, 2, 2, 2, 110, 170, 124, 112, 97, 160, 133, 93, 86, 344, 77, 41, 67], "bytes": [33447, 129410, 79722, 53667, 34017, 32567, 37591, 21098, 24895, 1188, 1580, 1340, 1820, 1580, 16800, 723048, 88, 88, 88, 88, 33458, 55528, 46291, 29519, 25327, 52845, 44119, 28855, 22187, 265784, 15657, 4623, 11003]}, "top_talkers": [{"ip": "185.220.101.5", "bytes": 722400}, {"ip": "192.168.0.180", "bytes": 373067}, {"ip": "34.117.59.81", "bytes": 246072}, {"ip": "192.168.40.28", "bytes": 169818}, {"ip": "128.116.127.3", "bytes": 35937}, {"ip": "1.1.1.1", "bytes": 25705}, {"ip": "8.8.8.8", "bytes": 22482}, {"ip": "128.116.48.3", "bytes": 20676}], "severity": {"CRITICAL": 4, "INFO": 24, "WARNING": 16}, "countries": [{"country": "US", "n": 35}, {"country": "NL", "n": 1}, {"country": "IE", "n": 1}, {"country": "GB", "n": 1}, {"country": "FR", "n": 1}, {"country": "AU", "n": 1}]};
+const $ = s => document.querySelector(s);
+const esc = s => (s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.className = c;
+                            if (txt != null) n.textContent = txt; return n; };
+
+// the rails are drawn to the container width rather than a fixed length, so
+// packets never travel past the end of the wire
+function drawRails() {
+  // font-family and font-size explicitly, NOT the `font` shorthand:
+  // getComputedStyle(el).font returns an empty string in Chrome, so the probe
+  // silently fell back to a proportional face and measured ~18% too wide,
+  // which drew a rail short of the container.
+  const cs = getComputedStyle($('#rail'));
+  const probe = el('span'); probe.style.cssText =
+    'position:absolute;visibility:hidden;white-space:pre;font-family:'
+    + cs.fontFamily + ';font-size:' + cs.fontSize;
+  probe.textContent = '-'.repeat(100); document.body.append(probe);
+  const chw = probe.getBoundingClientRect().width / 100; probe.remove();
+  const n = Math.ceil($('.wrap').clientWidth / (chw || 7)) + 2;
+  const rail = '-'.repeat(n);
+  $('#rail').textContent = rail;
+  $('#rail2').textContent = rail;
+}
+
+function human(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'G';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k';
+  return String(n);
+}
+
+// block characters give eight levels of resolution per cell, which is enough
+// to read a traffic curve without pulling in a charting library
+const BLOCKS = ['▁','▂','▃','▄','▅','▆','▇','█'];
+function sparkline(values) {
+  if (!values.length) return '';
+  const peak = Math.max(...values, 1);
+  return values.map(v => BLOCKS[Math.min(7, Math.floor((v / peak) * 8 - 0.0001) + (v ? 0 : 0))] || BLOCKS[0]).join('');
+}
+
+// one bar builder for both charts: a filled run and a dotted remainder, same
+// shape as the risk meter in the sibling project
+function barRow(label, value, max, display, cls) {
+  const cells = 22;
+  const on = max > 0 ? Math.max(1, Math.round((value / max) * cells)) : 0;
+  const row = el('div', 'bar-row' + (cls ? ' ' + cls : ''));
+  row.append(el('span', 'lbl', label));
+  const g = el('span', 'g');
+  g.append(document.createTextNode('['), el('span', 'on', '#'.repeat(on)),
+           el('span', 'rest', '.'.repeat(cells - on)), document.createTextNode(']'));
+  row.append(g, el('span', 'v', display));
+  return row;
+}
+
+async function refresh() {
+  // recorded snapshot standing in for the poll - same payload, same shape
+  const s = SNAPSHOT;
+
+  $('#updated').textContent = s.summary.last_updated;
+  $('#totals').textContent = s.summary.total_alerts + ' alerts total';
+  $('#c-active').textContent = s.summary.active_ips;
+  $('#c-known').textContent = s.summary.known_ips;
+  $('#c-warn').textContent = s.summary.warning;
+  $('#c-crit').textContent = s.summary.critical;
+
+  const pk = s.timeseries.packets, lb = s.timeseries.labels;
+  $('#spark').textContent = sparkline(pk);
+  $('#ax-from').textContent = lb[0] || '';
+  $('#ax-peak').textContent = pk.length ? 'peak ' + Math.max(...pk) : '';
+  $('#ax-to').textContent = lb[lb.length - 1] || '';
+
+  const talkers = $('#talkers'); talkers.replaceChildren();
+  const maxB = Math.max(...s.top_talkers.map(t => t.bytes), 1);
+  s.top_talkers.forEach(t => talkers.append(barRow(t.ip, t.bytes, maxB, human(t.bytes))));
+  if (!s.top_talkers.length) talkers.append(el('p', 'empty', 'no traffic yet'));
+
+  const sev = $('#sev'); sev.replaceChildren();
+  const order = ['CRITICAL', 'WARNING', 'INFO'];
+  const maxS = Math.max(...Object.values(s.severity), 1);
+  order.filter(k => k in s.severity).forEach(k =>
+    sev.append(barRow(k.toLowerCase(), s.severity[k], maxS, String(s.severity[k]), k)));
+  if (!Object.keys(s.severity).length) sev.append(el('p', 'empty', 'no alerts yet'));
+
+  const cur = $('#cur'); cur.replaceChildren();
+  s.current.forEach(r => {
+    const tr = el('tr');
+    tr.append(el('td', null, r.ip), el('td', 'num', String(r.packet_count)),
+              el('td', 'num', human(r.bytes_in)), el('td', 'num', human(r.bytes_out)));
+    cur.append(tr);
+  });
+  if (!s.current.length) {
+    const tr = el('tr'); const td = el('td', null, 'no traffic yet');
+    td.colSpan = 4; tr.append(td); cur.append(tr);
+  }
+
+  const al = $('#alerts'); al.replaceChildren();
+  s.alerts.forEach(a => {
+    const row = el('div', 'al ' + a.severity);
+    row.append(el('span', 'sev', a.severity[0]),
+               el('span', 'cat', '[' + a.category + ']'),
+               el('span', 'ts', a.ts.slice(11)),
+               el('span', 'msg', a.message));
+    al.append(row);
+  });
+  if (!s.alerts.length) al.append(el('p', 'empty', 'no alerts yet'));
+}
+
+drawRails();
+// and again once the webfont lands: measuring character width before
+// JetBrains Mono loads uses the fallback's metrics, which draws a rail too
+// short for the container and lets packets travel past the end of the wire
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawRails);
+addEventListener('resize', drawRails);
+refresh();
+</script>
+</body>
+</html>
